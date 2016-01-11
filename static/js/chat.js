@@ -27,7 +27,7 @@ ws.onmessage = function (evt) {
 		if (sender == nick) {
 			sender = "Me";
 		} else {
-			notify('<strong>' + message.data.sender + '</strong>: ' + message.data.text, 'default', 2000);
+			notify('<strong>' + message.data.sender + '</strong>: ' + message.data.text, 'info', 2000);
 		}
 		terminal.innerHTML += "<p>" + sender + ": " + message.data.text + "</p>";
 		terminal.scrollTop = terminal.scrollHeight;
