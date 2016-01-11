@@ -7,9 +7,9 @@ This is only for playing around with websockets and not for production ;)
 Usage
 -----
 
-```
-./main.py
-```
+ - Install tornado: `pip install tornado`
+ - Run the app: `./main.py`
+ - Go to: http://localhost:8888/
 
 Features
 --------

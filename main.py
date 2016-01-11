@@ -1,11 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+A small and simple chat website using tornado and websockets.
+"""
+
+__authors__ = "sedrubal"
+__email__ = "sebastian.endres@online.de",
+__license__ = "GPLv3"
+__url__ = "https://github.com/sedrubal/websocketchat"
+
+
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-
-CHAT_HTML = './assets/chat.html'
+import os
+import json
+import time
 
 
 class ChatPage(tornado.web.RequestHandler):
@@ -14,7 +25,12 @@ class ChatPage(tornado.web.RequestHandler):
     """
     def get(self):
         """the handler for get requests"""
-        self.write(open(CHAT_HTML).read())
+        self.render("chat.html",
+                    description=__doc__,
+                    author=__authors__,
+                    license=__license__,
+                    url=__url__,
+                    authors_url='/'.join(__url__.split('/')[:-1]))
 
 
 class ChatWebSocket(tornado.websocket.WebSocketHandler):
@@ -28,9 +44,14 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         """new message received"""
-        # TODO check messages
+        try:
+            msg = json.loads(message)
+        except ValueError:
+            print("invalid message received: '%s'" % message)
+            return
+        msg['serverdate'] = time.time()
         for socket in APP.websockets:
-            socket.send(message)
+            socket.send(json.dumps(msg))
 
     def send(self, message):
         """send a message to my client"""
@@ -42,12 +63,20 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
         print("WebSocket closed")
 
 
+SETTINGS = {
+    "template_path": os.path.join(os.path.dirname(__file__), "templates"),
+    "static_path": os.path.join(os.path.dirname(__file__), "static"),
+}
+
+
 def make_app():
     """create a new application and specify the url patterns"""
     return tornado.web.Application([
         (r"/websocket", ChatWebSocket),
         (r"/", ChatPage),
-    ])
+        (r"/static/", tornado.web.StaticFileHandler,
+         dict(path=SETTINGS['static_path'])),
+    ], **SETTINGS)
 
 if __name__ == "__main__":
     APP = make_app()

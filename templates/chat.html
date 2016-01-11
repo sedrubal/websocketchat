@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Websocket Chat</title>
+
+    <!-- Bootstrap -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<link rel="stylesheet" href="/static/css/chat.css">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+		<div id="noti-container" class="row">
+			<div id="notifications"></div>
+		</div>
+		
+		<div class="jumbotron">
+			<div class="container">
+				<h1>Websocket Chat</h1>
+				<p>{{ description }}</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="input-group">
+					<span class="input-group-addon" id="nick">@</span>
+					<input id="nickbox" type="text" class="form-control" placeholder="Nick" aria-describedby="nickname" onkeydown="if (event.keyCode == 13) { setNick();return false;}" >
+				</div>
+
+				<div id="terminal-wrapper">
+					<div id="terminal" class="well"></div>
+				</div>
+
+				<div class="input-group">
+					<input id="sendtxt" type="text" class="form-control" placeholder="Your Message..." onkeydown="if (event.keyCode == 13) { send();return false;}">
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="button" onclick="send()">Send</button>
+					</span>
+				</div>
+
+			</div>
+		</div>
+
+		<footer>
+			<p><span class="glyphicon glyphicon-copyright-mark"></span>&nbsp;<a href="{{ authors_url }}">{{ author }}</a>&nbsp;·&nbsp;{{ license }}
+			&nbsp;·&nbsp;<span class="glyphicon glyphicon-console"></span>&nbsp;<a href="{{ url }}">GitHub</a></span>
+			&nbsp;·&nbsp;Made with <span class="glyphicon glyphicon-heart-empty"></span> and <a href="https://getbootstrap.com">Bootstrap</a></span>
+			</p>
+		</footer>
+
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" integrity="sha384-6ePHh72Rl3hKio4HiJ841psfsRJveeS+aLoaEf3BWfS+gTF0XdAqku2ka8VddikM" crossorigin="anonymous"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+		<!-- The main javascript for chatting -->
+		<script src="/static/js/chat.js"></script>
+  </body>
+</html>
