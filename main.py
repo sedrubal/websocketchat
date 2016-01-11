@@ -71,18 +71,16 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
         print("WebSocket opened")
         self.client = Client(socket=self)
         APP.clients.append(self.client)
+        msg = ChatWebSocket.all_nicks()
+        for client in APP.clients:
+            client.socket.send(json.dumps(msg))
 
     def on_message(self, message):
         """new message received"""
         msg = ChatWebSocket.parse_message(message)
         if msg is None:
             return
-        if msg['action'] == 'changenick':
-            if not self.client.change_nick(msg):
-                return
-        msg['serverdate'] = time.time()
-        for client in APP.clients:
-            client.socket.send(json.dumps(msg))
+        self.process_message(msg)
 
     def send(self, message):
         """send a message to my client"""
@@ -92,18 +90,58 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
         """the client of this socket leaved, remove this socket from list"""
         APP.clients.remove(self.client)
         print("WebSocket closed")
+        msg = ChatWebSocket.all_nicks()
+        for client in APP.clients:
+            client.socket.send(json.dumps(msg))
+
+    def process_message(self, msg):
+        """
+        If the server has to do something (change nick, ...),
+        it will be done here
+        :param: msg: the parsed message
+        """
+        msg['serverdate'] = time.time()
+        if msg['action'] == 'message':
+            # normal message
+            for client in APP.clients:
+                client.socket.send(json.dumps(msg))
+        elif msg['action'] == 'changenick':
+            # nick change
+            if self.client.change_nick(msg):
+                for client in APP.clients:
+                    client.socket.send(json.dumps(msg))
+        elif msg['action'] == 'getallnicks':
+            reply_msg = ChatWebSocket.all_nicks()
+            self.send(json.dumps(reply_msg))
+
+    @staticmethod
+    def all_nicks():
+        """collect all nicks"""
+        print("Announce all nicks")
+        msg = {
+            'action': 'allnicks',
+            'data': {
+                'allnicks': [],
+            },
+            'serverdate': time.time(),
+        }
+        for client in APP.clients:
+            msg['data']['allnicks'].append(client.nick)
+        print("All nicks: '%s'" % "', '".join(msg['data']['allnicks']))
+        return msg
 
     @staticmethod
     def parse_message(message):
         """
         checks, if the received message json is valid and returns a dict
+        :return: dict containing info from message on success, None on failure
         """
         try:
             msg = json.loads(message)
         except ValueError:
             print("invalid message received: '%s'" % message)
             return None
-        if not msg['action'] or not msg['data']:
+        if not msg['action']:
             return None
         else:
             return msg
