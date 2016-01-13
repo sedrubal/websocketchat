@@ -1,3 +1,4 @@
+var ws;
 var sendtxt = document.getElementById('sendtxt');
 var terminal = document.getElementById('terminal');
 var nickbox = document.getElementById('nickbox');
@@ -5,22 +6,31 @@ var notdiv = $('#notifications');
 sendtxt.value = "";
 terminal.value = "";
 
-nick = "Anonymous";
+var nick = "Anonymous";
+var url = "ws://localhost:8888/websocket";
 
-var ws = new WebSocket("ws://localhost:8888/websocket");
-
-ws.onopen = function() {
-	var message = {
-		"action": "message",
-		"data": {
-			"sender": nick,
-			"text": "Hello World"
-		}
-	}
-	ws.send(JSON.stringify(message));
+document.onload = connect(url);
+window.onbeforeunload = function() {
+	ws = undefined; // don't reconnect while reloading page
 };
 
-ws.onmessage = function (evt) {
+
+function connect(url) {
+	if (ws == undefined || ws.readyState == ws.CLOSED)	 {
+		ws = new WebSocket(url);
+		ws.onopen = onopen;
+		ws.onmessage = onmessage;
+		ws.onclose = onclose;
+	}
+}
+
+function onopen() {
+	notify('Connected to ' + url, 'success', 1000);
+	nick = "Anonymous";
+	setNick();
+};
+
+function onmessage(evt) {
 	message = JSON.parse(evt.data);
 	if (message.action == "message") {
 		var sender = message.data.sender;
@@ -37,8 +47,12 @@ ws.onmessage = function (evt) {
 	}
 };
 
-ws.onclose = function() {
-	notify("<strong>Disconnected from server!</stron>", "danger", 3600000);
+function onclose() {
+	if (ws != undefined && ws.readyState == ws.CLOSED) {
+		// why is this function triggered so often???
+		notify("<strong>Disconnected from server!</strong> Retrying in 3 sec...", "danger", 3000, 'noti-disconnected');
+		window.setTimeout(connect(url), 3000);
+	}
 }
 
 function send() {
@@ -55,26 +69,32 @@ function send() {
 }
 
 function setNick() {
-	var message = {
-		"action": "changenick",
-		"data": {
-			"oldnick": nick,
-			"newnick": nickbox.value
+	if (nickbox.value != "") {
+		var message = {
+			"action": "changenick",
+			"data": {
+				"oldnick": nick,
+				"newnick": nickbox.value
+			}
 		}
+		ws.send(JSON.stringify(message));
+		nick = message.data.newnick;
+		terminal.scrollTop = terminal.scrollHeight;
+		sendtxt.focus();
 	}
-	nick = message.data.newnick;
-	ws.send(JSON.stringify(message));
-	terminal.scrollTop = terminal.scrollHeight;
-	sendtxt.focus();
 }
 
-function notify(message, level, timeout) {
+function notify(message, level='info', timeout=3000, id=undefined) {
 	// message: a html text
 	// level: "success", "info", "warning" or "danger"
 	// timeout: the time to display the notification in ms
-	var id = Math.floor((Math.random() * 99999) + 1);
-	notdiv.after('<div id="noti'+id+'" class="alert alert-'+level+' alert-dismissible fade in out" role="alert">\
+	// id: the html id for the notification. If id already exists, this function also closes the old notification
+	if (!id) {
+		id = 'noti' + Math.floor((Math.random() * 99999) + 1); // random id (hopefully a non existing id)
+	} else if (document.getElementById(id)) {
+		window.setTimeout(function() { $('#'+id).alert('close') }, 0); // dirty workaround: when directly closing, jquery has an internal eroor: too much recursion?!
+	}
+	notdiv.after('<div id="'+id+'" class="alert alert-'+level+' alert-dismissible fade in out" role="alert">\
 			<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + message + '</div>');
-	var alert = $('#noti'+id).alert();
-	window.setTimeout(function() { alert.alert('close') }, timeout);
+	window.setTimeout(function() { $('#'+id).alert('close') }, timeout);
 }
